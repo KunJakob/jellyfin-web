@@ -87,9 +87,7 @@ export const LibraryProvider: FC<PropsWithChildren<unknown>> = ({ children }) =>
         infiniteScrollActive
     );
 
-    const itemsResult = useMemo<LibraryItemsResult>(() => {
-        if (!infiniteScrollActive) return finiteResult;
-
+    const infiniteItemsResult = useMemo<LibraryItemsResult>(() => {
         const pages = infiniteResult.data?.pages ?? [];
         return {
             data: pages.length ? {
@@ -100,18 +98,28 @@ export const LibraryProvider: FC<PropsWithChildren<unknown>> = ({ children }) =>
             isPlaceholderData: false,
             refetch: infiniteResult.refetch
         };
-    }, [infiniteScrollActive, finiteResult, infiniteResult]);
+    }, [infiniteResult.data, infiniteResult.isPending, infiniteResult.refetch]);
+
+    const itemsResult = infiniteScrollActive ? infiniteItemsResult : finiteResult;
+
+    const { hasNextPage, isFetchingNextPage, isFetchNextPageError, fetchNextPage } = infiniteResult;
 
     const infiniteScroll = useMemo<LibraryInfiniteScrollState | undefined>(() => (
         infiniteScrollActive ? {
-            hasNextPage: infiniteResult.hasNextPage,
-            isFetchingNextPage: infiniteResult.isFetchingNextPage,
-            isFetchNextPageError: infiniteResult.isFetchNextPageError,
+            hasNextPage,
+            isFetchingNextPage,
+            isFetchNextPageError,
             fetchNextPage: () => {
-                void infiniteResult.fetchNextPage();
+                void fetchNextPage();
             }
         } : undefined
-    ), [infiniteScrollActive, infiniteResult]);
+    ), [
+        infiniteScrollActive,
+        hasNextPage,
+        isFetchingNextPage,
+        isFetchNextPageError,
+        fetchNextPage
+    ]);
 
     const state = useMemo(() => ({
         ...DEFAULT_LIBRARY_STATE,
