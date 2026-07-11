@@ -20,6 +20,7 @@ import { LibraryTab } from 'types/libraryTab';
 import type { ListOptions } from 'types/listOptions';
 
 import AlphabetPicker from './AlphabetPicker';
+import InfiniteScrollSentinel from './InfiniteScrollSentinel';
 
 const ItemsView: FC = () => {
     const {
@@ -27,6 +28,7 @@ const ItemsView: FC = () => {
         collectionType,
         content,
         itemsResult,
+        infiniteScroll,
         viewSettings,
         setViewSettings
     } = useLibrary();
@@ -192,14 +194,18 @@ const ItemsView: FC = () => {
             {(!itemsResult || itemsResult.isPending) ? (
                 <Loading />
             ) : (
-                <ItemsContainer
-                    className={itemsContainerClass}
-                    parentId={parentId}
-                    reloadItems={itemsResult?.refetch}
-                    queryKey={allItemsQueryKey}
-                >
-                    {getItems()}
-                </ItemsContainer>
+                <>
+                    <ItemsContainer
+                        className={itemsContainerClass}
+                        parentId={parentId}
+                        reloadItems={itemsResult?.refetch}
+                        queryKey={allItemsQueryKey}
+                    >
+                        {getItems()}
+                    </ItemsContainer>
+
+                    {infiniteScroll && <InfiniteScrollSentinel infiniteScroll={infiniteScroll} />}
+                </>
             )}
         </Box>
     );

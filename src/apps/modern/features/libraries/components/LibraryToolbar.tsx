@@ -46,6 +46,7 @@ const LibraryToolbar: FC = () => {
         content,
         isLibraryPath,
         itemsResult,
+        infiniteScroll,
         viewSettings,
         setViewSettings
     } = useLibrary();
@@ -86,10 +87,10 @@ const LibraryToolbar: FC = () => {
     const itemCountDisplay = useMemo(() => {
         if (isPending) return '\u2219'; // Bullet "operator" character as a loading indicator
 
-        return isPaginationRequired ?
+        return isPaginationRequired && !infiniteScroll ?
             globalize.translate('ListPaging', paginationStart, paginationEnd, totalRecordCount) :
             totalRecordCount;
-    }, [isPending, isPaginationRequired, paginationStart, paginationEnd, totalRecordCount]);
+    }, [isPending, isPaginationRequired, infiniteScroll, paginationStart, paginationEnd, totalRecordCount]);
 
     if (!isLibraryPath) return null;
 
@@ -228,7 +229,7 @@ const LibraryToolbar: FC = () => {
                         )}
                     </ButtonGroup>
 
-                    {isPaginationEnabled && isUserPaginationEnabled && (
+                    {isPaginationEnabled && isUserPaginationEnabled && !infiniteScroll && (
                         <Pagination
                             setLibraryViewSettings={setLibraryViewSettings}
                             index={startIndex}
