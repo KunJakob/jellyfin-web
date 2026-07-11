@@ -47,6 +47,23 @@ export function LibraryPreferences({ onChange, values }: Readonly<LibraryPrefere
 
             <FormControl fullWidth>
                 <FormControlLabel
+                    aria-describedby='display-settings-lib-infinite-scroll-description'
+                    control={
+                        <Checkbox
+                            checked={values.libraryInfiniteScroll}
+                            onChange={onChange}
+                        />
+                    }
+                    label={globalize.translate('LabelLibraryInfiniteScroll')}
+                    name='libraryInfiniteScroll'
+                />
+                <FormHelperText id='display-settings-lib-infinite-scroll-description'>
+                    {globalize.translate('LabelLibraryInfiniteScrollHelp')}
+                </FormHelperText>
+            </FormControl>
+
+            <FormControl fullWidth>
+                <FormControlLabel
                     aria-describedby='display-settings-lib-backdrops-description'
                     control={
                         <Checkbox

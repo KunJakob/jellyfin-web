@@ -100,6 +100,7 @@ async function loadDisplaySettings({
         language: settings.language() || 'auto',
         layout: layoutManager.getSavedLayout() || 'auto',
         libraryPageSize: settings.libraryPageSize(),
+        libraryInfiniteScroll: Boolean(settings.libraryInfiniteScroll()),
         maxDaysForNextUp: settings.maxDaysForNextUp(),
         screensaver: settings.screensaver() || 'none',
         screensaverTime: settings.screensaverTime(),
@@ -145,6 +146,7 @@ async function saveDisplaySettings({
     userSettings.enableRewatchingInNextUp(newDisplaySettings.enableRewatchingInNextUp);
     userSettings.useEpisodeImagesInNextUpAndResume(newDisplaySettings.episodeImagesInNextUp);
     userSettings.libraryPageSize(newDisplaySettings.libraryPageSize);
+    userSettings.libraryInfiniteScroll(newDisplaySettings.libraryInfiniteScroll);
     userSettings.maxDaysForNextUp(newDisplaySettings.maxDaysForNextUp);
     userSettings.screensaver(normalizeValue(newDisplaySettings.screensaver));
     userSettings.screensaverTime(newDisplaySettings.screensaverTime);

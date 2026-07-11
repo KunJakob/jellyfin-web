@@ -15,6 +15,7 @@ export interface DisplaySettingsValues {
     language: string;
     layout: string;
     libraryPageSize: number;
+    libraryInfiniteScroll: boolean;
     maxDaysForNextUp: number;
     screensaver: string;
     screensaverTime: number;
