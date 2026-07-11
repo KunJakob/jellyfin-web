@@ -18,13 +18,14 @@ import { getPlaylistApi } from '@jellyfin/sdk/lib/utils/api/playlist-api';
 import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
 import { getLiveTvApi } from '@jellyfin/sdk/lib/utils/api/live-tv-api';
 import { getUserDataApi } from '@jellyfin/sdk/lib/utils/api/user-data-api';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
 import datetime from 'scripts/datetime';
 import globalize from 'lib/globalize';
 
 import { type JellyfinApiContext, useApi } from './useApi';
 import { getAlphaPickerQuery, getFieldsQuery, getFiltersQuery, getLimitQuery } from 'utils/items';
 import { getProgramSections, getSuggestionSections } from 'utils/sections';
+import { getNextStartIndex } from 'apps/modern/features/libraries/utils/infiniteScroll';
 
 import type { LibraryViewSettings, ParentId } from 'types/library';
 import { type Section, type SectionType, SectionApiMethod } from 'types/sections';
@@ -359,11 +360,36 @@ const fetchGetItemsViewByType = async (
     return {};
 };
 
+const ITEMS_VIEW_TYPES = [
+    LibraryTab.Movies,
+    LibraryTab.Favorites,
+    LibraryTab.Collections,
+    LibraryTab.Series,
+    LibraryTab.Episodes,
+    LibraryTab.Studios,
+    LibraryTab.Albums,
+    LibraryTab.AlbumArtists,
+    LibraryTab.Artists,
+    LibraryTab.Authors,
+    LibraryTab.Playlists,
+    LibraryTab.Songs,
+    LibraryTab.Books,
+    LibraryTab.PhotoAlbums,
+    LibraryTab.Photos,
+    LibraryTab.Videos,
+    LibraryTab.Channels,
+    LibraryTab.SeriesTimers,
+    LibraryTab.MusicVideos,
+    LibraryTab.Folders,
+    LibraryTab.Mixed
+];
+
 export const useGetItemsViewByType = (
     viewType: LibraryTab | undefined,
     parentId: ParentId,
     itemType: BaseItemKind[] = [],
-    libraryViewSettings: LibraryViewSettings
+    libraryViewSettings: LibraryViewSettings,
+    isEnabled = true
 ) => {
     const currentApi = useApi();
     return useQuery({
@@ -389,31 +415,50 @@ export const useGetItemsViewByType = (
                 { signal }
             ),
         refetchOnWindowFocus: false,
-        enabled: !!currentApi.api && !!currentApi.user?.Id
-            && viewType
-            && [
-                LibraryTab.Movies,
-                LibraryTab.Favorites,
-                LibraryTab.Collections,
-                LibraryTab.Series,
-                LibraryTab.Episodes,
-                LibraryTab.Studios,
-                LibraryTab.Albums,
-                LibraryTab.AlbumArtists,
-                LibraryTab.Artists,
-                LibraryTab.Authors,
-                LibraryTab.Playlists,
-                LibraryTab.Songs,
-                LibraryTab.Books,
-                LibraryTab.PhotoAlbums,
-                LibraryTab.Photos,
-                LibraryTab.Videos,
-                LibraryTab.Channels,
-                LibraryTab.SeriesTimers,
-                LibraryTab.MusicVideos,
-                LibraryTab.Folders,
-                LibraryTab.Mixed
-            ].includes(viewType)
+        enabled: isEnabled && !!currentApi.api && !!currentApi.user?.Id
+            && !!viewType
+            && ITEMS_VIEW_TYPES.includes(viewType)
+    });
+};
+
+export const useGetItemsViewByTypeInfinite = (
+    viewType: LibraryTab | undefined,
+    parentId: ParentId,
+    itemType: BaseItemKind[] = [],
+    libraryViewSettings: LibraryViewSettings,
+    isEnabled = true
+) => {
+    const currentApi = useApi();
+    return useInfiniteQuery({
+        queryKey: [
+            'User',
+            currentApi.user?.Id,
+            'Items',
+            parentId,
+            'ViewByType',
+            'Infinite',
+            viewType,
+            {
+                itemType,
+                // StartIndex is driven by the page param below
+                libraryViewSettings: { ...libraryViewSettings, StartIndex: 0 }
+            }
+        ],
+        initialPageParam: 0,
+        queryFn: ({ pageParam, signal }) =>
+            fetchGetItemsViewByType(
+                currentApi,
+                viewType!,
+                parentId,
+                itemType,
+                { ...libraryViewSettings, StartIndex: pageParam },
+                { signal }
+            ) as Promise<ItemDtoQueryResult>,
+        getNextPageParam: (_lastPage, allPages) => getNextStartIndex(allPages),
+        refetchOnWindowFocus: false,
+        enabled: isEnabled && !!currentApi.api && !!currentApi.user?.Id
+            && !!viewType
+            && ITEMS_VIEW_TYPES.includes(viewType)
     });
 };
 
