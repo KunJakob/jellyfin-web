@@ -15,6 +15,8 @@ interface UserSettings {
     language?: string
     /** The number of items to display per page in the library */
     libraryPageSize: number
+    /** Load additional library items automatically while scrolling */
+    libraryInfiniteScroll: boolean
 }
 
 // NOTE: This is an incomplete list of only the settings that are currently being used
@@ -29,14 +31,16 @@ const UserSettingField = {
     DateTimeLocale: 'datetimelocale',
     Language: 'language',
     // Library settings
-    LibraryPageSize: 'libraryPageSize'
+    LibraryPageSize: 'libraryPageSize',
+    LibraryInfiniteScroll: 'libraryInfiniteScroll'
 };
 
 const DEFAULT_LIBRARY_PAGE_SIZE = 100;
 
 const UserSettingsContext = createContext<UserSettings>({
     disableCustomCss: false,
-    libraryPageSize: DEFAULT_LIBRARY_PAGE_SIZE
+    libraryPageSize: DEFAULT_LIBRARY_PAGE_SIZE,
+    libraryInfiniteScroll: false
 });
 
 export const useUserSettings = () => useContext(UserSettingsContext);
@@ -49,6 +53,7 @@ export const UserSettingsProvider: FC<PropsWithChildren<unknown>> = ({ children 
     const [ dateTimeLocale, setDateTimeLocale ] = useState<string>();
     const [ language, setLanguage ] = useState<string | undefined>(FALLBACK_CULTURE);
     const [ libraryPageSize, setLibraryPageSize ] = useState<number>(DEFAULT_LIBRARY_PAGE_SIZE);
+    const [ libraryInfiniteScroll, setLibraryInfiniteScroll ] = useState<boolean>(false);
 
     const { user } = useApi();
 
@@ -59,7 +64,8 @@ export const UserSettingsProvider: FC<PropsWithChildren<unknown>> = ({ children 
         dashboardTheme,
         dateTimeLocale,
         locale: language,
-        libraryPageSize
+        libraryPageSize,
+        libraryInfiniteScroll
     }), [
         customCss,
         disableCustomCss,
@@ -67,7 +73,8 @@ export const UserSettingsProvider: FC<PropsWithChildren<unknown>> = ({ children 
         dashboardTheme,
         dateTimeLocale,
         language,
-        libraryPageSize
+        libraryPageSize,
+        libraryInfiniteScroll
     ]);
 
     // Update the values of the user settings
@@ -79,6 +86,7 @@ export const UserSettingsProvider: FC<PropsWithChildren<unknown>> = ({ children 
         setDateTimeLocale(userSettings.dateTimeLocale());
         setLanguage(userSettings.language());
         setLibraryPageSize(userSettings.libraryPageSize() ?? DEFAULT_LIBRARY_PAGE_SIZE);
+        setLibraryInfiniteScroll(userSettings.libraryInfiniteScroll());
     }, []);
 
     const onUserSettingsChange = useCallback((_e: Event, name?: string) => {

@@ -807,6 +807,8 @@
     "LabelLanguage": "Language",
     "LabelLanNetworks": "LAN networks",
     "LabelLevel": "Level",
+    "LabelLibraryInfiniteScroll": "Infinite scrolling in libraries",
+    "LabelLibraryInfiniteScrollHelp": "Automatically load more items while scrolling instead of showing pages. Has no effect when the library page size is 0.",
     "LabelLibraryPageSize": "Library page size",
     "LabelLibraryPageSizeHelp": "Set the amount of items to show on a library page. Setting a value of 0 will disable pagination. Please note that setting this to 0 or any value greater than 100 may lead to bugs and reduced performance.",
     "LabelMaxDaysForNextUp": "Max days in 'Next Up'",

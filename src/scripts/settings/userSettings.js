@@ -528,6 +528,19 @@ export class UserSettings {
     }
 
     /**
+     * Get or set the library infinite scroll option.
+     * @param {boolean|undefined} [val] - Enable infinite scrolling in libraries.
+     * @return {boolean} Infinite scrolling enabled.
+     */
+    libraryInfiniteScroll(val) {
+        if (val !== undefined) {
+            return this.set('libraryInfiniteScroll', val.toString(), false);
+        }
+
+        return toBoolean(this.get('libraryInfiniteScroll', false), false);
+    }
+
+    /**
      * Get or set max days for next up list.
      * @param {number|undefined} [val] - Max days for next up.
      * @return {number} Max days for a show to stay in next up without being watched.
@@ -750,6 +763,7 @@ export const backdropScreensaverInterval = currentSettings.backdropScreensaverIn
 export const slideshowInterval = currentSettings.slideshowInterval.bind(currentSettings);
 export const screensaverTime = currentSettings.screensaverTime.bind(currentSettings);
 export const libraryPageSize = currentSettings.libraryPageSize.bind(currentSettings);
+export const libraryInfiniteScroll = currentSettings.libraryInfiniteScroll.bind(currentSettings);
 export const maxDaysForNextUp = currentSettings.maxDaysForNextUp.bind(currentSettings);
 export const enableRewatchingInNextUp = currentSettings.enableRewatchingInNextUp.bind(currentSettings);
 export const soundEffects = currentSettings.soundEffects.bind(currentSettings);
