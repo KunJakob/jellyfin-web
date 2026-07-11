@@ -1,11 +1,11 @@
 import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collection-type';
-import { UseQueryResult } from '@tanstack/react-query';
 import React, { type FC, type PropsWithChildren, createContext, useContext, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'usehooks-ts';
 
 import useCurrentTab from 'hooks/useCurrentTab';
-import { useGetItemsViewByType } from 'hooks/useFetchItems';
+import { useGetItemsViewByType, useGetItemsViewByTypeInfinite } from 'hooks/useFetchItems';
+import { useUserSettings } from 'hooks/useUserSettings';
 import { ItemDtoQueryResult } from 'types/base/models/item-dto-query-result';
 import { LibraryViewSettings } from 'types/library';
 import { LibraryTab } from 'types/libraryTab';
@@ -15,13 +15,29 @@ import { LibraryRoutes } from '../constants/libraryRoutes';
 import { isLibraryPath } from '../utils/path';
 import { getDefaultLibraryViewSettings, getSettingsKey } from '../utils/settings';
 import { getViewContent } from '../utils/viewContent';
+import { isInfiniteScrollActive } from '../utils/infiniteScroll';
+
+export interface LibraryItemsResult {
+    data?: ItemDtoQueryResult;
+    isPending: boolean;
+    isPlaceholderData?: boolean;
+    refetch: () => void;
+}
+
+export interface LibraryInfiniteScrollState {
+    hasNextPage: boolean;
+    isFetchingNextPage: boolean;
+    isFetchNextPageError: boolean;
+    fetchNextPage: () => void;
+}
 
 interface LibraryState {
     collectionType?: CollectionType;
     content?: LibraryTabContent;
     isLibraryPath: boolean;
     id?: string;
-    itemsResult?: UseQueryResult<ItemDtoQueryResult | undefined, Error>;
+    itemsResult?: LibraryItemsResult;
+    infiniteScroll?: LibraryInfiniteScrollState;
     viewSettings?: LibraryViewSettings;
     setViewSettings?: React.Dispatch<React.SetStateAction<LibraryViewSettings>>;
 }
@@ -52,12 +68,50 @@ export const LibraryProvider: FC<PropsWithChildren<unknown>> = ({ children }) =>
         getDefaultLibraryViewSettings(settingsViewType)
     );
 
-    const itemsResult = useGetItemsViewByType(
+    const { libraryInfiniteScroll, libraryPageSize } = useUserSettings();
+    const infiniteScrollActive = isInfiniteScrollActive(libraryInfiniteScroll, libraryPageSize);
+
+    // Both hooks are always called (rules of hooks); the inactive one is disabled.
+    const finiteResult = useGetItemsViewByType(
         viewType,
         libraryId,
         content?.itemType,
-        viewSettings
+        viewSettings,
+        !infiniteScrollActive
     );
+    const infiniteResult = useGetItemsViewByTypeInfinite(
+        viewType,
+        libraryId,
+        content?.itemType,
+        viewSettings,
+        infiniteScrollActive
+    );
+
+    const itemsResult = useMemo<LibraryItemsResult>(() => {
+        if (!infiniteScrollActive) return finiteResult;
+
+        const pages = infiniteResult.data?.pages ?? [];
+        return {
+            data: pages.length ? {
+                Items: pages.flatMap(page => page.Items ?? []),
+                TotalRecordCount: pages[pages.length - 1]?.TotalRecordCount ?? 0
+            } : undefined,
+            isPending: infiniteResult.isPending,
+            isPlaceholderData: false,
+            refetch: infiniteResult.refetch
+        };
+    }, [infiniteScrollActive, finiteResult, infiniteResult]);
+
+    const infiniteScroll = useMemo<LibraryInfiniteScrollState | undefined>(() => (
+        infiniteScrollActive ? {
+            hasNextPage: infiniteResult.hasNextPage,
+            isFetchingNextPage: infiniteResult.isFetchingNextPage,
+            isFetchNextPageError: infiniteResult.isFetchNextPageError,
+            fetchNextPage: () => {
+                void infiniteResult.fetchNextPage();
+            }
+        } : undefined
+    ), [infiniteScrollActive, infiniteResult]);
 
     const state = useMemo(() => ({
         ...DEFAULT_LIBRARY_STATE,
@@ -67,8 +121,9 @@ export const LibraryProvider: FC<PropsWithChildren<unknown>> = ({ children }) =>
         content,
         viewSettings,
         setViewSettings,
-        itemsResult
-    }), [collectionType, isLibPath, id, content, viewSettings, setViewSettings, itemsResult]);
+        itemsResult,
+        infiniteScroll
+    }), [collectionType, isLibPath, id, content, viewSettings, setViewSettings, itemsResult, infiniteScroll]);
 
     return (
         <LibraryContext.Provider value={state}>
