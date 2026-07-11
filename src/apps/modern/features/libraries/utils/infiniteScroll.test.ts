@@ -43,7 +43,8 @@ describe('getNextStartIndex', () => {
         expect(getNextStartIndex([])).toBeUndefined();
     });
 
-    it('tolerates pages with missing Items arrays', () => {
-        expect(getNextStartIndex([{ TotalRecordCount: 10 }])).toBe(0);
+    it('stops when the last page contributed no items', () => {
+        expect(getNextStartIndex([{ TotalRecordCount: 10 }])).toBeUndefined();
+        expect(getNextStartIndex([page(100, 250), { Items: [], TotalRecordCount: 250 }])).toBeUndefined();
     });
 });
